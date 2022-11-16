@@ -1,6 +1,6 @@
 import {StatusBar} from 'expo-status-bar';
 import {useState, useEffect} from 'react';
-import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert} from 'react-native';
 
 import * as Location from 'expo-location';
 
@@ -21,13 +21,13 @@ interface Charger {
 export default function App() {
   const [chargers, setChargers] = useState([]);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
-  const [error, setError] = useState<String | null>(null);
+  const [selected, setSelected] = useState<Charger | null>(null);
 
   useEffect(() => {
     (async () => {
       const permissions = await Location.requestForegroundPermissionsAsync();
       if (permissions.status !== 'granted') {
-        setError('Permission to access location was denied');
+        Alert.alert('Permission to access location was denied');
         return;
       }
       const location = await Location.getCurrentPositionAsync({});
@@ -41,19 +41,28 @@ export default function App() {
       };
       const paramString = Object.keys(params).map(key => `${key}=${params[key as ParamKey]}`).join('&');
       const res = await fetch(`https://api.openchargemap.io/v3/poi?${paramString}`).then(r => r.json());
-      setChargers(res.map((charger: Charger) => charger.AddressInfo));
+      setChargers(res);
     })();
   }, []);
 
+  const startCharging = () => {
+    console.log(selected)
+  }
+
   return (
     <View style={styles.container}>
-      <StatusBar style="auto" />
+      <StatusBar style={'auto'} />
       <SafeAreaView>
         <ScrollView>
           {
-            chargers.map((charger: AddressInfo) => <Text>{charger.AddressLine1}</Text>)
+            chargers.map((charger: Charger, i) => (
+              <TouchableOpacity key={i} onPress={() => setSelected(charger)}>
+                <Text>{charger.AddressInfo.AddressLine1}</Text>
+              </TouchableOpacity>
+            ))
           }
         </ScrollView>
+        <Button onPress={startCharging} title={'Start Charging'} disabled={selected === null} />
       </SafeAreaView>
     </View>
   );
