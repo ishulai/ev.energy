@@ -1,52 +1,49 @@
 import {StatusBar} from 'expo-status-bar';
 import {useState, useEffect} from 'react';
 import {Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert} from 'react-native';
+import OpenChargeMap, {AddressInfo, Charger} from './classes/OpenChargeMap';
+import API from './classes/API';
 
 import * as Location from 'expo-location';
+import { LocationObjectCoords } from 'expo-location';
 
-import * as OCMConfig from './OCMConfig.json';
-
-type ParamKey = 'key' | 'latitude' | 'longitude' | 'maxresults';
-
-interface AddressInfo {
-  AddressLine1: String,
-  Town: String,
-  StateOrProvince: String,
-  Postcode: String,
-};
-interface Charger {
-  AddressInfo: AddressInfo,
-};
 
 export default function App() {
-  const [chargers, setChargers] = useState([]);
+  const [chargers, setChargers] = useState<Array<Charger>>([]);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [selected, setSelected] = useState<Charger | null>(null);
 
+  const getLocation = async (): Promise<LocationObjectCoords> => {
+    const permissions = await Location.requestForegroundPermissionsAsync();
+    if (permissions.status !== 'granted') {
+      throw new Error('Permission to access location was denied');
+    }
+    const location = await Location.getCurrentPositionAsync({});
+    setLocation(location);
+    return location.coords;
+  }
+
   useEffect(() => {
     (async () => {
-      const permissions = await Location.requestForegroundPermissionsAsync();
-      if (permissions.status !== 'granted') {
-        Alert.alert('Permission to access location was denied');
-        return;
+      try {
+        const {latitude, longitude} = await getLocation();
+        const chargers = await OpenChargeMap.getNearby(longitude, latitude);
+        setChargers(chargers);
+      } catch(e) {
+        Alert.alert((e as Error).message);
       }
-      const location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
-      const {latitude, longitude} = location.coords;
-      const params = {
-        key: OCMConfig.apiKey,
-        latitude: latitude,
-        longitude: longitude,
-        maxresults: 10,
-      };
-      const paramString = Object.keys(params).map(key => `${key}=${params[key as ParamKey]}`).join('&');
-      const res = await fetch(`https://api.openchargemap.io/v3/poi?${paramString}`).then(r => r.json());
-      setChargers(res);
     })();
   }, []);
 
-  const startCharging = () => {
-    console.log(selected)
+  const startCharging = async () => {
+    if (selected) {
+      // Original problem said to use ChargePointID but that doesn't exist in all objects, so ID was a better choice.
+      try {
+        await API.startCharging(selected.ID);
+      } catch(e) {
+        Alert.alert((e as Error).message);
+      }
+    }
   }
 
   return (
@@ -57,7 +54,7 @@ export default function App() {
           {
             chargers.map((charger: Charger, i) => (
               <TouchableOpacity key={i} onPress={() => setSelected(charger)}>
-                <Text>{charger.AddressInfo.AddressLine1}</Text>
+                <Text style={{color: selected && selected.ID === charger.ID ? 'green' : 'black'}}>{charger.AddressInfo.AddressLine1}</Text>
               </TouchableOpacity>
             ))
           }
