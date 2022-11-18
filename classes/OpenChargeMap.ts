@@ -35,4 +35,4 @@ class OpenChargeMap {
 
 const instance = new OpenChargeMap();
 
-export {instance as default, AddressInfo, Charger};
+export {instance as default, Charger};

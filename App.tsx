@@ -1,7 +1,7 @@
 import {StatusBar} from 'expo-status-bar';
 import {useState, useEffect} from 'react';
 import {Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert} from 'react-native';
-import OpenChargeMap, {AddressInfo, Charger} from './classes/OpenChargeMap';
+import OpenChargeMap, {Charger} from './classes/OpenChargeMap';
 import API from './classes/API';
 
 import * as Location from 'expo-location';
