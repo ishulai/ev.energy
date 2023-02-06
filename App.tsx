@@ -46,17 +46,30 @@ export default function App() {
     }
   }
 
+  const renderChargers = () => {
+    const listOfChargers = [];
+    chargers.forEach((charger: Charger, i) => {
+      listOfChargers.push((
+        <TouchableOpacity key={i} onPress={() => setSelected(charger)}>
+          <Text style={{color: selected && selected.ID === charger.ID ? 'green' : 'black'}}>{charger.AddressInfo.AddressLine1}</Text>
+        </TouchableOpacity>
+      ));
+    });
+    return listOfChargers;
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar style={'auto'} />
       <SafeAreaView>
         <ScrollView>
           {
-            chargers.map((charger: Charger, i) => (
-              <TouchableOpacity key={i} onPress={() => setSelected(charger)}>
-                <Text style={{color: selected && selected.ID === charger.ID ? 'green' : 'black'}}>{charger.AddressInfo.AddressLine1}</Text>
-              </TouchableOpacity>
-            ))
+            // chargers.map((charger: Charger, i) => (
+            //   <TouchableOpacity key={i} onPress={() => setSelected(charger)}>
+            //     <Text style={{color: selected && selected.ID === charger.ID ? 'green' : 'black'}}>{charger.AddressInfo.AddressLine1}</Text>
+            //   </TouchableOpacity>
+            // ))
+            renderChargers()
           }
         </ScrollView>
         <Button onPress={startCharging} title={'Start Charging'} disabled={selected === null} />
